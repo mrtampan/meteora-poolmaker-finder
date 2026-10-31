@@ -19,6 +19,25 @@ A modern, concise Node.js CLI tool to extract the **first genesis transaction** 
 
 ---
 
+## 📦 Installation & Setup
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Setup environment file:**
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Initialize state data file:**
+   ```bash
+   cp state-data.example.json state-data.json
+   ```
+
+---
+
 ## 🚀 Usage
 
 ### 1. Interactive Mode (Recommended)
