@@ -9,11 +9,11 @@ export function printWelcomeBanner() {
   console.log('\n' + pc.bold(pc.cyan('='.repeat(72))));
   console.log(pc.bold(pc.cyan('  🚀 SOLANA POOL FIRST TRANSACTION EXPLORER')));
   console.log(pc.bold(pc.cyan('='.repeat(72))));
-  console.log(pc.white('  Ketik command untuk memulai:'));
-  console.log(`    ${pc.bold(pc.green('/scan <pooladdress>'))}  ${pc.white('- Scan transaksi pertama (genesis) & pembuat pool')}`);
-  console.log(`    ${pc.bold(pc.blue('/help'))}                ${pc.dim('- Tampilkan panduan command')}`);
-  console.log(`    ${pc.bold(pc.magenta('/clear'))}               ${pc.dim('- Bersihkan layar terminal')}`);
-  console.log(`    ${pc.bold(pc.red('/exit'))}                ${pc.dim('- Keluar dari program')}`);
+  console.log(pc.white('  Type a command to get started:'));
+  console.log(`    ${pc.bold(pc.green('/scan <pooladdress>'))}  ${pc.white('- Scan initial genesis transaction & pool creator')}`);
+  console.log(`    ${pc.bold(pc.blue('/help'))}                ${pc.dim('- Show command guide')}`);
+  console.log(`    ${pc.bold(pc.magenta('/clear'))}               ${pc.dim('- Clear terminal screen')}`);
+  console.log(`    ${pc.bold(pc.red('/exit'))}                ${pc.dim('- Exit application')}`);
   console.log(pc.cyan('-'.repeat(72)) + '\n');
 }
 
@@ -21,15 +21,15 @@ export function printWelcomeBanner() {
  * Print command guide / help
  */
 export function printHelp() {
-  console.log('\n' + pc.bold(pc.cyan('Panduan Command:')));
+  console.log('\n' + pc.bold(pc.cyan('Command Guide:')));
   console.log(`  ${pc.bold(pc.green('/scan <pooladdress>'))}`);
-  console.log(`      Memindai alamat pool Solana untuk mencari transaksi pertama & maker.`);
-  console.log(`      Hasil scan otomatis tersimpan ke ${pc.bold('state-data.json')}.`);
-  console.log(`      Contoh: ${pc.dim('/scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a')}\n`);
+  console.log(`      Scan Solana pool address to find the genesis transaction and creator.`);
+  console.log(`      Scan results are automatically saved to ${pc.bold('state-data.json')}.`);
+  console.log(`      Example: ${pc.dim('/scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a')}\n`);
   console.log(`  ${pc.bold(pc.magenta('/clear'))}`);
-  console.log(`      Membersihkan tampilan terminal.\n`);
-  console.log(`  ${pc.bold(pc.red('/exit'))} atau ${pc.bold(pc.red('/quit'))}`);
-  console.log(`      Keluar dari program.\n`);
+  console.log(`      Clear terminal screen.\n`);
+  console.log(`  ${pc.bold(pc.red('/exit'))} or ${pc.bold(pc.red('/quit'))}`);
+  console.log(`      Exit application.\n`);
 }
 
 /**

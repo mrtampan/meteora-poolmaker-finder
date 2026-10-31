@@ -28,7 +28,7 @@ export async function startInteractiveCli(onScan) {
   const rl = readline.createInterface({ input, output });
 
   const sigintHandler = () => {
-    console.log(pc.cyan('\n\nTerima kasih, sampai jumpa! 👋\n'));
+    console.log(pc.cyan('\n\nThank you, goodbye! 👋\n'));
     process.exit(0);
   };
   process.on('SIGINT', sigintHandler);
@@ -52,7 +52,7 @@ export async function startInteractiveCli(onScan) {
 
       // Exit commands
       if (lower === '/exit' || lower === '/quit' || lower === 'exit' || lower === 'quit') {
-        console.log(pc.cyan('\nTerima kasih, sampai jumpa! 👋\n'));
+        console.log(pc.cyan('\nThank you, goodbye! 👋\n'));
         break;
       }
 
@@ -73,43 +73,43 @@ export async function startInteractiveCli(onScan) {
       if (line.startsWith('/scan')) {
         const target = line.replace(/^\/scan\s*/i, '').trim();
 
-        // Peringatan jika pooladdress kosong
+        // Warning if pooladdress is empty
         if (!target) {
-          console.log(pc.yellow('\n⚠️  Peringatan: Pool address wajib diisi!'));
+          console.log(pc.yellow('\n⚠️  Warning: Pool address is required!'));
           console.log(pc.white('   Format: ') + pc.bold(pc.green('/scan <pooladdress>')));
-          console.log(pc.dim('   Contoh: ') + pc.cyan('/scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a\n'));
+          console.log(pc.dim('   Example: ') + pc.cyan('/scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a\n'));
           continue;
         }
 
         if (!isValidSolanaAddress(target)) {
-          console.log(pc.red(`\n❌ Error: Alamat '${target}' tidak valid sebagai Solana address!`));
-          console.log(pc.dim('   Alamat Solana harus berupa Base58 (32-44 karakter).\n'));
+          console.log(pc.red(`\n❌ Error: Address '${target}' is not a valid Solana address!`));
+          console.log(pc.dim('   Solana address must be Base58 encoded (32-44 characters).\n'));
           continue;
         }
 
         try {
           await onScan(target);
         } catch (err) {
-          console.error(pc.red(`\n❌ Error saat menjalankan scan: ${err.message}\n`));
+          console.error(pc.red(`\n❌ Error while scanning: ${err.message}\n`));
         }
         continue;
       }
 
       // Direct address pasted without /scan prefix
       if (isValidSolanaAddress(line)) {
-        console.log(pc.blue(`\nℹ️  Solana address terdeteksi tanpa prefix /scan, memulai scan...`));
+        console.log(pc.blue(`\nℹ️  Detected Solana address without /scan prefix, starting scan...`));
         try {
           await onScan(line);
         } catch (err) {
-          console.error(pc.red(`\n❌ Error saat menjalankan scan: ${err.message}\n`));
+          console.error(pc.red(`\n❌ Error while scanning: ${err.message}\n`));
         }
         continue;
       }
 
       // Unrecognized input
-      console.log(pc.red(`\n❌ Command tidak valid: "${line}"`));
-      console.log(pc.yellow(`   Ketik `) + pc.bold(pc.green('/scan <pooladdress>')) + pc.yellow(` untuk memindai pool.`));
-      console.log(pc.dim(`   Ketik /help untuk melihat daftar command.\n`));
+      console.log(pc.red(`\n❌ Invalid command: "${line}"`));
+      console.log(pc.yellow(`   Type `) + pc.bold(pc.green('/scan <pooladdress>')) + pc.yellow(` to scan a pool.`));
+      console.log(pc.dim(`   Type /help to view available commands.\n`));
     }
   } finally {
     process.removeListener('SIGINT', sigintHandler);

@@ -22,38 +22,38 @@ export async function executeScan(poolAddress, options = {}) {
   const targetAddress = (poolAddress || '').trim();
 
   if (!isValidSolanaAddress(targetAddress)) {
-    console.log(pc.red(`\n❌ Error: Alamat '${targetAddress}' tidak valid sebagai Solana address (Base58 32-44 karakter).\n`));
+    console.log(pc.red(`\n❌ Error: Address '${targetAddress}' is not a valid Solana address (Base58 32-44 characters).\n`));
     return false;
   }
 
   const connection = createConnection(options.rpc);
 
   // 1. Fetch pool metadata
-  const spinner = ora(`Menghubungkan ke Solana RPC: ${targetAddress}...`).start();
+  const spinner = ora(`Connecting to Solana RPC: ${targetAddress}...`).start();
   let poolInfo;
   try {
     poolInfo = await getPoolInfo(connection, targetAddress);
   } catch (err) {
-    spinner.fail(`Gagal mengambil data pool: ${err.message}`);
+    spinner.fail(`Failed to fetch pool data: ${err.message}`);
     return false;
   }
 
   // 2. Fetch first transaction (genesis)
-  spinner.text = 'Mengambil data transaksi pertama (genesis / initial pool transaction)...';
+  spinner.text = 'Fetching initial transaction (genesis / pool creation)...';
   let firstTx;
   try {
     firstTx = await fetchFirstTransaction(connection, targetAddress);
   } catch (err) {
-    spinner.fail(`Gagal mengambil transaksi pertama: ${err.message}`);
+    spinner.fail(`Failed to fetch initial transaction: ${err.message}`);
     return false;
   }
 
   if (!firstTx) {
-    spinner.fail(`Tidak ditemukan transaksi untuk pool: ${targetAddress}`);
+    spinner.fail(`No transactions found for pool: ${targetAddress}`);
     return false;
   }
 
-  spinner.succeed('Berhasil memuat transaksi pertama pool.');
+  spinner.succeed('Successfully loaded initial pool transaction.');
 
   // 3. Format result data
   const resultItem = formatResultItem(firstTx, poolInfo);
@@ -78,10 +78,10 @@ program
   .version('1.0.0');
 
 program
-  .argument('[args...]', 'Pool address atau command seperti /scan <pooladdress>')
-  .option('-p, --pool <address>', 'Tentukan pool address via opsi')
-  .option('-o, --output <file>', 'Lokasi file penyimpanan JSON', 'state-data.json')
-  .option('-r, --rpc <url>', 'URL Solana RPC custom (Alchemy, Helius, QuickNode, dll)')
+  .argument('[args...]', 'Pool address or command like /scan <pooladdress>')
+  .option('-p, --pool <address>', 'Specify pool address via option')
+  .option('-o, --output <file>', 'JSON output file path', 'state-data.json')
+  .option('-r, --rpc <url>', 'Custom Solana RPC URL (Alchemy, Helius, QuickNode, etc.)')
   .action(async (args, options) => {
     let poolTarget = options.pool || null;
 
@@ -89,18 +89,18 @@ program
       if (args[0] === '/scan') {
         poolTarget = args[1] || null;
         if (!poolTarget) {
-          console.log(pc.yellow('\n⚠️  Peringatan: Pool address wajib diisi!'));
+          console.log(pc.yellow('\n⚠️  Warning: Pool address is required!'));
           console.log(pc.white('   Format: ') + pc.bold(pc.green('/scan <pooladdress>')));
-          console.log(pc.dim('   Contoh: ') + pc.cyan('node src/index.js /scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a\n'));
+          console.log(pc.dim('   Example: ') + pc.cyan('node src/index.js /scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a\n'));
           process.exit(1);
         }
       } else if (args[0].startsWith('/scan')) {
         const rest = args.join(' ').replace(/^\/scan\s*/i, '').trim();
         poolTarget = rest || null;
         if (!poolTarget) {
-          console.log(pc.yellow('\n⚠️  Peringatan: Pool address wajib diisi!'));
+          console.log(pc.yellow('\n⚠️  Warning: Pool address is required!'));
           console.log(pc.white('   Format: ') + pc.bold(pc.green('/scan <pooladdress>')));
-          console.log(pc.dim('   Contoh: ') + pc.cyan('node src/index.js /scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a\n'));
+          console.log(pc.dim('   Example: ') + pc.cyan('node src/index.js /scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a\n'));
           process.exit(1);
         }
       } else {
