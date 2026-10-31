@@ -9,7 +9,66 @@ import { getPoolInfo } from './pool.js';
 import { fetchFirstTransaction } from './txFetcher.js';
 import { printPoolHeader, renderTable } from './ui.js';
 import { formatResultItem, saveStateData } from './exporter.js';
-import { resolvePoolAddress } from './prompt.js';
+import { startInteractiveCli, isValidSolanaAddress, DEFAULT_POOL } from './prompt.js';
+
+/**
+ * Executes a scan for the given pool address:
+ * - Fetches pool metadata
+ * - Fetches first genesis transaction
+ * - Displays formatted terminal table
+ * - Saves result to state-data.json
+ */
+export async function executeScan(poolAddress, options = {}) {
+  const targetAddress = (poolAddress || '').trim();
+
+  if (!isValidSolanaAddress(targetAddress)) {
+    console.log(pc.red(`\n❌ Error: Alamat '${targetAddress}' tidak valid sebagai Solana address (Base58 32-44 karakter).\n`));
+    return false;
+  }
+
+  const connection = createConnection(options.rpc);
+
+  // 1. Fetch pool metadata
+  const spinner = ora(`Menghubungkan ke Solana RPC: ${targetAddress}...`).start();
+  let poolInfo;
+  try {
+    poolInfo = await getPoolInfo(connection, targetAddress);
+  } catch (err) {
+    spinner.fail(`Gagal mengambil data pool: ${err.message}`);
+    return false;
+  }
+
+  // 2. Fetch first transaction (genesis)
+  spinner.text = 'Mengambil data transaksi pertama (genesis / initial pool transaction)...';
+  let firstTx;
+  try {
+    firstTx = await fetchFirstTransaction(connection, targetAddress);
+  } catch (err) {
+    spinner.fail(`Gagal mengambil transaksi pertama: ${err.message}`);
+    return false;
+  }
+
+  if (!firstTx) {
+    spinner.fail(`Tidak ditemukan transaksi untuk pool: ${targetAddress}`);
+    return false;
+  }
+
+  spinner.succeed('Berhasil memuat transaksi pertama pool.');
+
+  // 3. Format result data
+  const resultItem = formatResultItem(firstTx, poolInfo);
+
+  // 4. Render clean terminal table
+  printPoolHeader(poolInfo, connection.rpcEndpoint);
+  console.log(renderTable([resultItem], poolInfo));
+
+  // 5. Save result data to state-data.json
+  const outputFile = options.output || 'state-data.json';
+  const savedPath = saveStateData(resultItem, outputFile);
+  console.log(pc.green(`✓ Result data saved to `) + pc.bold(savedPath) + '\n');
+
+  return true;
+}
 
 const program = new Command();
 
@@ -19,53 +78,34 @@ program
   .version('1.0.0');
 
 program
-  .argument('[poolAddress]', 'Solana pool address (jika kosong, akan diminta input manual)')
+  .argument('[args...]', 'Pool address atau command seperti /scan <pooladdress>')
   .option('-p, --pool <address>', 'Tentukan pool address via opsi')
   .option('-o, --output <file>', 'Lokasi file penyimpanan JSON', 'state-data.json')
   .option('-r, --rpc <url>', 'URL Solana RPC custom (Alchemy, Helius, QuickNode, dll)')
-  .action(async (poolArg, options) => {
-    // 1. Resolve pool address (from argument, option, or interactive prompt)
-    const poolAddress = await resolvePoolAddress(options.pool || poolArg);
-    const connection = createConnection(options.rpc);
+  .action(async (args, options) => {
+    let poolTarget = options.pool || null;
 
-    // 2. Fetch pool metadata
-    const spinner = ora(`Menghubungkan ke Solana RPC: ${poolAddress}...`).start();
-    let poolInfo;
-    try {
-      poolInfo = await getPoolInfo(connection, poolAddress);
-    } catch (err) {
-      spinner.fail(`Gagal mengambil data pool: ${err.message}`);
-      process.exit(1);
+    if (!poolTarget && args && args.length > 0) {
+      if (args[0] === '/scan') {
+        poolTarget = args[1] || DEFAULT_POOL;
+      } else if (args[0].startsWith('/scan')) {
+        const rest = args.join(' ').replace(/^\/scan\s*/i, '').trim();
+        poolTarget = rest || DEFAULT_POOL;
+      } else {
+        poolTarget = args[0];
+      }
     }
 
-    // 3. Fetch first transaction (genesis)
-    spinner.text = 'Mengambil data transaksi pertama (genesis / initial pool transaction)...';
-    let firstTx;
-    try {
-      firstTx = await fetchFirstTransaction(connection, poolAddress);
-    } catch (err) {
-      spinner.fail(`Gagal mengambil transaksi pertama: ${err.message}`);
-      process.exit(1);
+    // If pool target is supplied via CLI args/flag, execute directly
+    if (poolTarget) {
+      const ok = await executeScan(poolTarget, options);
+      process.exit(ok ? 0 : 1);
     }
 
-    if (!firstTx) {
-      spinner.fail(`Tidak ditemukan transaksi untuk pool: ${poolAddress}`);
-      process.exit(1);
-    }
-
-    spinner.succeed('Berhasil memuat transaksi pertama pool.');
-
-    // 4. Format result data (signature, address_by, pair_name, token_name, status, timeformatted)
-    const resultItem = formatResultItem(firstTx, poolInfo);
-
-    // 5. Render clean terminal table
-    printPoolHeader(poolInfo, connection.rpcEndpoint);
-    console.log(renderTable([resultItem], poolInfo));
-
-    // 6. Save result data to state-data.json
-    const outputFile = options.output || 'state-data.json';
-    const savedPath = saveStateData(resultItem, outputFile);
-    console.log(pc.green(`✓ Result data saved to `) + pc.bold(savedPath) + '\n');
+    // Otherwise, start interactive command mode (default for npm start)
+    await startInteractiveCli(async (target) => {
+      await executeScan(target, options);
+    });
   });
 
 program.parse(process.argv);

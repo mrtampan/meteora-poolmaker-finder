@@ -3,6 +3,39 @@ import Table from 'cli-table3';
 import pc from 'picocolors';
 
 /**
+ * Print welcome banner for interactive command mode
+ */
+export function printWelcomeBanner() {
+  console.log('\n' + pc.bold(pc.cyan('='.repeat(72))));
+  console.log(pc.bold(pc.cyan('  🚀 SOLANA POOL FIRST TRANSACTION EXPLORER')));
+  console.log(pc.bold(pc.cyan('='.repeat(72))));
+  console.log(pc.white('  Ketik command untuk memulai:'));
+  console.log(`    ${pc.bold(pc.green('/scan <pooladdress>'))}  ${pc.white('- Scan transaksi pertama (genesis) & pembuat pool')}`);
+  console.log(`    ${pc.bold(pc.yellow('/scan default'))}        ${pc.dim('- Scan pool contoh (Meteora DLMM GTA6/SOL)')}`);
+  console.log(`    ${pc.bold(pc.blue('/help'))}                ${pc.dim('- Tampilkan panduan command')}`);
+  console.log(`    ${pc.bold(pc.magenta('/clear'))}               ${pc.dim('- Bersihkan layar terminal')}`);
+  console.log(`    ${pc.bold(pc.red('/exit'))}                ${pc.dim('- Keluar dari program')}`);
+  console.log(pc.cyan('-'.repeat(72)) + '\n');
+}
+
+/**
+ * Print command guide / help
+ */
+export function printHelp() {
+  console.log('\n' + pc.bold(pc.cyan('Panduan Command:')));
+  console.log(`  ${pc.bold(pc.green('/scan <pooladdress>'))}`);
+  console.log(`      Memindai alamat pool Solana untuk mencari transaksi pertama & maker.`);
+  console.log(`      Hasil scan otomatis tersimpan ke ${pc.bold('state-data.json')}.`);
+  console.log(`      Contoh: ${pc.dim('/scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a')}\n`);
+  console.log(`  ${pc.bold(pc.yellow('/scan default'))}`);
+  console.log(`      Menjalankan scan dengan pool default.\n`);
+  console.log(`  ${pc.bold(pc.magenta('/clear'))}`);
+  console.log(`      Membersihkan tampilan terminal.\n`);
+  console.log(`  ${pc.bold(pc.red('/exit'))} atau ${pc.bold(pc.red('/quit'))}`);
+  console.log(`      Keluar dari program.\n`);
+}
+
+/**
  * Print decorative pool header
  */
 export function printPoolHeader(poolInfo, rpcEndpoint) {

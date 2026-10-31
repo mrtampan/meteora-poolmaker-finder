@@ -21,20 +21,42 @@ Aplikasi CLI Node.js / JavaScript modern dan ringkas untuk mengekstrak **transak
 
 ## 🚀 Penggunaan
 
-### 1. Menjalankan dengan Pool Address Langsung
+### 1. Menjalankan Mode Interaktif (Rekomendasi)
+Jalankan program dengan:
+```bash
+npm start
+```
+Setelah aplikasi berjalan, ketik command:
+```bash
+/scan <pooladdress>
+```
+Contoh:
+```bash
+/scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a
+```
+Atau untuk scan pool default:
+```bash
+/scan default
+```
+
+#### Command yang Tersedia di Mode Interaktif:
+- `/scan <pooladdress>` : Scan genesis transaksi & pembuat pool Solana
+- `/scan default` : Scan pool default (Meteora DLMM GTA6/SOL)
+- `/help` : Menampilkan petunjuk command
+- `/clear` : Membersihkan tampilan terminal
+- `/exit` atau `/quit` : Keluar dari program
+
+---
+
+### 2. Menjalankan Langsung via CLI Argument
+Anda juga dapat menjalankan scan langsung dalam satu perintah:
+```bash
+node src/index.js /scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a
+```
+Atau tanpa kata `/scan`:
 ```bash
 node src/index.js xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a
 ```
-Atau alamat pool lainnya:
-```bash
-node src/index.js 58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2
-```
-
-### 2. Menjalankan Tanpa Argumen (Input Manual Interaktif)
-```bash
-node src/index.js
-```
-CLI akan meminta Anda memasukkan pool address di terminal (atau tekan `Enter` untuk default pool).
 
 ---
 

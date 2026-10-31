@@ -3,6 +3,7 @@ import * as readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { PublicKey } from '@solana/web3.js';
 import pc from 'picocolors';
+import { printWelcomeBanner, printHelp } from './ui.js';
 
 export const DEFAULT_POOL = 'xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a';
 
@@ -20,57 +21,116 @@ export function isValidSolanaAddress(address) {
 }
 
 /**
- * Resolves a pool address either from CLI input or via an interactive manual prompt.
+ * Starts interactive CLI command loop.
+ * Users can type /scan <pooladdress>, /scan default, /help, /clear, /exit
+ */
+export async function startInteractiveCli(onScan) {
+  printWelcomeBanner();
+
+  const rl = readline.createInterface({ input, output });
+
+  const sigintHandler = () => {
+    console.log(pc.cyan('\n\nTerima kasih, sampai jumpa! 👋\n'));
+    process.exit(0);
+  };
+  process.on('SIGINT', sigintHandler);
+
+  try {
+    while (true) {
+      let answer;
+      try {
+        answer = await rl.question(pc.bold(pc.cyan('solana-pool-tx > ')));
+      } catch {
+        // Stream closed or interrupted
+        break;
+      }
+
+      if (answer === null || answer === undefined) break;
+
+      const line = answer.trim();
+      if (!line) continue;
+
+      const lower = line.toLowerCase();
+
+      // Exit commands
+      if (lower === '/exit' || lower === '/quit' || lower === 'exit' || lower === 'quit') {
+        console.log(pc.cyan('\nTerima kasih, sampai jumpa! 👋\n'));
+        break;
+      }
+
+      // Help command
+      if (lower === '/help' || lower === 'help') {
+        printHelp();
+        continue;
+      }
+
+      // Clear terminal
+      if (lower === '/clear' || lower === 'clear') {
+        console.clear();
+        printWelcomeBanner();
+        continue;
+      }
+
+      // /scan command
+      if (line.startsWith('/scan')) {
+        let target = line.replace(/^\/scan\s*/i, '').trim();
+
+        if (!target) {
+          console.log(pc.yellow('\n⚠️  Harap sertakan pool address: ') + pc.bold(pc.green('/scan <pooladdress>')));
+          console.log(pc.dim(`   Contoh: /scan ${DEFAULT_POOL}`));
+          console.log(pc.dim(`   Atau ketik: /scan default\n`));
+          continue;
+        }
+
+        if (target.toLowerCase() === 'default') {
+          target = DEFAULT_POOL;
+        }
+
+        if (!isValidSolanaAddress(target)) {
+          console.log(pc.red(`\n❌ Error: Alamat '${target}' tidak valid!`));
+          console.log(pc.dim(`   Alamat Solana harus berupa Base58 (32-44 karakter).\n`));
+          continue;
+        }
+
+        try {
+          await onScan(target);
+        } catch (err) {
+          console.error(pc.red(`\n❌ Error saat menjalankan scan: ${err.message}\n`));
+        }
+        continue;
+      }
+
+      // Direct address pasted without /scan prefix
+      if (isValidSolanaAddress(line)) {
+        console.log(pc.blue(`\nℹ️  Solana address terdeteksi tanpa prefix /scan, memulai scan...`));
+        try {
+          await onScan(line);
+        } catch (err) {
+          console.error(pc.red(`\n❌ Error saat menjalankan scan: ${err.message}\n`));
+        }
+        continue;
+      }
+
+      // Unrecognized input
+      console.log(pc.red(`\n❌ Command tidak valid: "${line}"`));
+      console.log(pc.yellow(`   Ketik `) + pc.bold(pc.green('/scan <pooladdress>')) + pc.yellow(` untuk memindai pool.`));
+      console.log(pc.dim(`   Ketik /help untuk melihat daftar command.\n`));
+    }
+  } finally {
+    process.removeListener('SIGINT', sigintHandler);
+    rl.close();
+  }
+}
+
+/**
+ * Resolves a pool address either from CLI input or via an interactive prompt (fallback).
  */
 export async function resolvePoolAddress(providedAddress) {
-  // If address was supplied via argument or flag, validate and use it directly
   if (providedAddress && typeof providedAddress === 'string') {
     const trimmed = providedAddress.trim();
     if (isValidSolanaAddress(trimmed)) {
       return trimmed;
     }
-    console.warn(pc.yellow(`\n⚠️  Alamat '${providedAddress}' tidak valid sebagai Solana address.`));
-    console.log(pc.dim(`   Beralih ke input manual...\n`));
   }
-
-  const isTty = process.stdin.isTTY;
-  const rl = readline.createInterface({ input, output });
-
-  try {
-    if (isTty) {
-      console.log('\n' + pc.bold(pc.cyan('='.repeat(70))));
-      console.log(pc.bold(pc.cyan('  INPUT MANUAL POOL ADDRESS SOLANA')));
-      console.log(pc.bold(pc.cyan('='.repeat(70))));
-      console.log(pc.white('  Silakan ketik atau paste Pool Address yang ingin ditampilkan:'));
-      console.log(pc.dim(`  (Tekan [Enter] untuk default: ${DEFAULT_POOL})`));
-    }
-
-    while (true) {
-      const promptText = isTty ? pc.bold(pc.yellow('  Pool Address > ')) : '';
-      const answer = await rl.question(promptText);
-      const trimmed = answer ? answer.trim() : '';
-
-      if (!trimmed) {
-        if (isTty) {
-          console.log(pc.green(`  ✓ Menggunakan default pool: ${DEFAULT_POOL}\n`));
-        }
-        return DEFAULT_POOL;
-      }
-
-      if (isValidSolanaAddress(trimmed)) {
-        if (isTty) {
-          console.log(pc.green(`  ✓ Pool Address valid: ${trimmed}\n`));
-        }
-        return trimmed;
-      }
-
-      console.log(pc.red(`  ❌ Error: Alamat '${trimmed}' tidak valid! Alamat Solana harus berupa Base58 (32-44 karakter).`));
-      if (!isTty) {
-        return DEFAULT_POOL;
-      }
-      console.log(pc.dim(`     Silakan coba lagi atau tekan Enter untuk default.`));
-    }
-  } finally {
-    rl.close();
-  }
+  return DEFAULT_POOL;
 }
