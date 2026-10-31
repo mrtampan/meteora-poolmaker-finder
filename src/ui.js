@@ -5,11 +5,17 @@ import pc from 'picocolors';
 /**
  * Print welcome banner for interactive command mode
  */
-export function printWelcomeBanner() {
+export function printWelcomeBanner(botUsername = null) {
   console.log('\n' + pc.bold(pc.cyan('='.repeat(72))));
   console.log(pc.bold(pc.cyan('  🚀 SOLANA POOL FIRST TRANSACTION EXPLORER')));
   console.log(pc.bold(pc.cyan('='.repeat(72))));
-  console.log(pc.white('  Type a command to get started:'));
+  if (botUsername) {
+    console.log(`  ${pc.bold('Telegram Console :')} ${pc.green(`Active (@${botUsername})`)}`);
+  } else {
+    console.log(`  ${pc.bold('Telegram Console :')} ${pc.dim('Disabled (Set TELEGRAM_TOKEN in .env to enable)')}`);
+  }
+  console.log(pc.cyan('-'.repeat(72)));
+  console.log(pc.white('  Type a command in terminal or Telegram:'));
   console.log(`    ${pc.bold(pc.green('/scan <pooladdress>'))}  ${pc.white('- Scan initial genesis transaction & pool creator')}`);
   console.log(`    ${pc.bold(pc.blue('/help'))}                ${pc.dim('- Show command guide')}`);
   console.log(`    ${pc.bold(pc.magenta('/clear'))}               ${pc.dim('- Clear terminal screen')}`);

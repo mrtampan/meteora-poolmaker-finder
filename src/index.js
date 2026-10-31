@@ -2,73 +2,12 @@
 
 // src/index.js
 import { Command } from 'commander';
-import ora from 'ora';
 import pc from 'picocolors';
-import { createConnection } from './rpc.js';
-import { getPoolInfo } from './pool.js';
-import { fetchFirstTransaction } from './txFetcher.js';
-import { printPoolHeader, renderTable } from './ui.js';
-import { formatResultItem, saveStateData } from './exporter.js';
-import { startInteractiveCli, isValidSolanaAddress } from './prompt.js';
+import { startInteractiveCli } from './prompt.js';
+import { TelegramBotClient } from './telegram.js';
+import { executeScan } from './scanner.js';
 
-/**
- * Executes a scan for the given pool address:
- * - Fetches pool metadata
- * - Fetches first genesis transaction
- * - Displays formatted terminal table
- * - Saves result to state-data.json
- */
-export async function executeScan(poolAddress, options = {}) {
-  const targetAddress = (poolAddress || '').trim();
-
-  if (!isValidSolanaAddress(targetAddress)) {
-    console.log(pc.red(`\n❌ Error: Address '${targetAddress}' is not a valid Solana address (Base58 32-44 characters).\n`));
-    return false;
-  }
-
-  const connection = createConnection(options.rpc);
-
-  // 1. Fetch pool metadata
-  const spinner = ora(`Connecting to Solana RPC: ${targetAddress}...`).start();
-  let poolInfo;
-  try {
-    poolInfo = await getPoolInfo(connection, targetAddress);
-  } catch (err) {
-    spinner.fail(`Failed to fetch pool data: ${err.message}`);
-    return false;
-  }
-
-  // 2. Fetch first transaction (genesis)
-  spinner.text = 'Fetching initial transaction (genesis / pool creation)...';
-  let firstTx;
-  try {
-    firstTx = await fetchFirstTransaction(connection, targetAddress);
-  } catch (err) {
-    spinner.fail(`Failed to fetch initial transaction: ${err.message}`);
-    return false;
-  }
-
-  if (!firstTx) {
-    spinner.fail(`No transactions found for pool: ${targetAddress}`);
-    return false;
-  }
-
-  spinner.succeed('Successfully loaded initial pool transaction.');
-
-  // 3. Format result data
-  const resultItem = formatResultItem(firstTx, poolInfo);
-
-  // 4. Render clean terminal table
-  printPoolHeader(poolInfo, connection.rpcEndpoint);
-  console.log(renderTable([resultItem], poolInfo));
-
-  // 5. Save result data to state-data.json
-  const outputFile = options.output || 'state-data.json';
-  const savedPath = saveStateData(resultItem, outputFile);
-  console.log(pc.green(`✓ Result data saved to `) + pc.bold(savedPath) + '\n');
-
-  return true;
-}
+export { executeScan };
 
 const program = new Command();
 
@@ -110,14 +49,38 @@ program
 
     // If pool target is supplied via CLI args/flag, execute directly
     if (poolTarget) {
-      const ok = await executeScan(poolTarget, options);
-      process.exit(ok ? 0 : 1);
+      const res = await executeScan(poolTarget, options);
+      process.exit(res ? 0 : 1);
     }
 
-    // Otherwise, start interactive command mode (default for npm start)
-    await startInteractiveCli(async (target) => {
-      await executeScan(target, options);
-    });
+    // Optional background Telegram Bot listener if TELEGRAM_TOKEN is set
+    let tgBot = null;
+    let botUsername = null;
+    if (process.env.TELEGRAM_TOKEN) {
+      try {
+        tgBot = new TelegramBotClient(process.env.TELEGRAM_TOKEN, {
+          allowedChatId: process.env.TELEGRAM_CHAT_ID
+        });
+        const me = await tgBot.getMe();
+        botUsername = me.username;
+        tgBot.startPolling(async (target) => {
+          return await executeScan(target, options);
+        });
+      } catch (err) {
+        console.warn(pc.yellow(`[Telegram Warning] Could not connect Telegram bot (${err.message})`));
+      }
+    }
+
+    // Start interactive command mode (default for npm start)
+    try {
+      await startInteractiveCli(async (target) => {
+        return await executeScan(target, options);
+      }, { botUsername });
+    } finally {
+      if (tgBot) {
+        tgBot.stopPolling();
+      }
+    }
   });
 
 program.parse(process.argv);

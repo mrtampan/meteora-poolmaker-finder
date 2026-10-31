@@ -22,8 +22,9 @@ export function isValidSolanaAddress(address) {
  * Starts interactive CLI command loop.
  * Users can type /scan <pooladdress>, /help, /clear, /exit
  */
-export async function startInteractiveCli(onScan) {
-  printWelcomeBanner();
+export async function startInteractiveCli(onScan, options = {}) {
+  const botUsername = options.botUsername || null;
+  printWelcomeBanner(botUsername);
 
   const rl = readline.createInterface({ input, output });
 
@@ -65,7 +66,7 @@ export async function startInteractiveCli(onScan) {
       // Clear terminal
       if (lower === '/clear' || lower === 'clear') {
         console.clear();
-        printWelcomeBanner();
+        printWelcomeBanner(botUsername);
         continue;
       }
 
