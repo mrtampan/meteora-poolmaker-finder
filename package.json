@@ -1,0 +1,35 @@
+{
+  "name": "solana-poolmaker-hunter",
+  "version": "1.0.0",
+  "description": "Solana Pool Transaction Explorer CLI",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "solana-pool-tx": "./src/index.js",
+    "solana-poolmaker-hunter": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "watch": "node src/index.js --watch",
+    "detail": "node src/index.js --detail"
+  },
+  "keywords": [
+    "solana",
+    "cli",
+    "pool",
+    "transactions",
+    "dlmm",
+    "meteora",
+    "dex"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@solana/web3.js": "^3.1.1",
+    "cli-table3": "^0.6.5",
+    "commander": "^15.0.0",
+    "dotenv": "^18.0.9",
+    "ora": "^9.4.1",
+    "picocolors": "^1.1.1"
+  }
+}
