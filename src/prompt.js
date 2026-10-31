@@ -5,8 +5,6 @@ import { PublicKey } from '@solana/web3.js';
 import pc from 'picocolors';
 import { printWelcomeBanner, printHelp } from './ui.js';
 
-export const DEFAULT_POOL = 'xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a';
-
 /**
  * Validates whether a string is a valid Solana Base58 public key.
  */
@@ -22,7 +20,7 @@ export function isValidSolanaAddress(address) {
 
 /**
  * Starts interactive CLI command loop.
- * Users can type /scan <pooladdress>, /scan default, /help, /clear, /exit
+ * Users can type /scan <pooladdress>, /help, /clear, /exit
  */
 export async function startInteractiveCli(onScan) {
   printWelcomeBanner();
@@ -73,22 +71,19 @@ export async function startInteractiveCli(onScan) {
 
       // /scan command
       if (line.startsWith('/scan')) {
-        let target = line.replace(/^\/scan\s*/i, '').trim();
+        const target = line.replace(/^\/scan\s*/i, '').trim();
 
+        // Peringatan jika pooladdress kosong
         if (!target) {
-          console.log(pc.yellow('\n⚠️  Harap sertakan pool address: ') + pc.bold(pc.green('/scan <pooladdress>')));
-          console.log(pc.dim(`   Contoh: /scan ${DEFAULT_POOL}`));
-          console.log(pc.dim(`   Atau ketik: /scan default\n`));
+          console.log(pc.yellow('\n⚠️  Peringatan: Pool address wajib diisi!'));
+          console.log(pc.white('   Format: ') + pc.bold(pc.green('/scan <pooladdress>')));
+          console.log(pc.dim('   Contoh: ') + pc.cyan('/scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a\n'));
           continue;
         }
 
-        if (target.toLowerCase() === 'default') {
-          target = DEFAULT_POOL;
-        }
-
         if (!isValidSolanaAddress(target)) {
-          console.log(pc.red(`\n❌ Error: Alamat '${target}' tidak valid!`));
-          console.log(pc.dim(`   Alamat Solana harus berupa Base58 (32-44 karakter).\n`));
+          console.log(pc.red(`\n❌ Error: Alamat '${target}' tidak valid sebagai Solana address!`));
+          console.log(pc.dim('   Alamat Solana harus berupa Base58 (32-44 karakter).\n'));
           continue;
         }
 
@@ -123,7 +118,7 @@ export async function startInteractiveCli(onScan) {
 }
 
 /**
- * Resolves a pool address either from CLI input or via an interactive prompt (fallback).
+ * Resolves a pool address either from CLI input or returns null.
  */
 export async function resolvePoolAddress(providedAddress) {
   if (providedAddress && typeof providedAddress === 'string') {
@@ -132,5 +127,5 @@ export async function resolvePoolAddress(providedAddress) {
       return trimmed;
     }
   }
-  return DEFAULT_POOL;
+  return null;
 }

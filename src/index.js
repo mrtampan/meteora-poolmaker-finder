@@ -9,7 +9,7 @@ import { getPoolInfo } from './pool.js';
 import { fetchFirstTransaction } from './txFetcher.js';
 import { printPoolHeader, renderTable } from './ui.js';
 import { formatResultItem, saveStateData } from './exporter.js';
-import { startInteractiveCli, isValidSolanaAddress, DEFAULT_POOL } from './prompt.js';
+import { startInteractiveCli, isValidSolanaAddress } from './prompt.js';
 
 /**
  * Executes a scan for the given pool address:
@@ -87,10 +87,22 @@ program
 
     if (!poolTarget && args && args.length > 0) {
       if (args[0] === '/scan') {
-        poolTarget = args[1] || DEFAULT_POOL;
+        poolTarget = args[1] || null;
+        if (!poolTarget) {
+          console.log(pc.yellow('\n⚠️  Peringatan: Pool address wajib diisi!'));
+          console.log(pc.white('   Format: ') + pc.bold(pc.green('/scan <pooladdress>')));
+          console.log(pc.dim('   Contoh: ') + pc.cyan('node src/index.js /scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a\n'));
+          process.exit(1);
+        }
       } else if (args[0].startsWith('/scan')) {
         const rest = args.join(' ').replace(/^\/scan\s*/i, '').trim();
-        poolTarget = rest || DEFAULT_POOL;
+        poolTarget = rest || null;
+        if (!poolTarget) {
+          console.log(pc.yellow('\n⚠️  Peringatan: Pool address wajib diisi!'));
+          console.log(pc.white('   Format: ') + pc.bold(pc.green('/scan <pooladdress>')));
+          console.log(pc.dim('   Contoh: ') + pc.cyan('node src/index.js /scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a\n'));
+          process.exit(1);
+        }
       } else {
         poolTarget = args[0];
       }

@@ -34,14 +34,10 @@ Contoh:
 ```bash
 /scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a
 ```
-Atau untuk scan pool default:
-```bash
-/scan default
-```
+*(Catatan: Pool address wajib diisi. Jika kosong, sistem akan menampilkan peringatan).*
 
 #### Command yang Tersedia di Mode Interaktif:
-- `/scan <pooladdress>` : Scan genesis transaksi & pembuat pool Solana
-- `/scan default` : Scan pool default (Meteora DLMM GTA6/SOL)
+- `/scan <pooladdress>` : Scan genesis transaksi & pembuat pool Solana (wajib menyertakan address)
 - `/help` : Menampilkan petunjuk command
 - `/clear` : Membersihkan tampilan terminal
 - `/exit` atau `/quit` : Keluar dari program
