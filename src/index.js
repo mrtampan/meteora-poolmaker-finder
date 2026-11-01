@@ -21,6 +21,7 @@ program
   .option('-p, --pool <address>', 'Specify pool address via option')
   .option('-o, --output <file>', 'JSON output file path', 'state-data.json')
   .option('-r, --rpc <url>', 'Custom Solana RPC URL (Alchemy, Helius, QuickNode, etc.)')
+  .option('-d, --daemon', 'Run in background daemon mode (for PM2 / VPS)')
   .action(async (args, options) => {
     let poolTarget = options.pool || null;
 
@@ -53,6 +54,8 @@ program
       process.exit(res ? 0 : 1);
     }
 
+    const isDaemon = Boolean(options.daemon || process.env.pm_id !== undefined || process.env.PM2_HOME !== undefined);
+
     // Optional background Telegram Bot listener if TELEGRAM_TOKEN is set
     let tgBot = null;
     let botUsername = null;
@@ -71,7 +74,34 @@ program
       }
     }
 
-    // Start interactive command mode (default for npm start)
+    // If running in daemon mode (PM2 / VPS)
+    if (isDaemon) {
+      console.log('\n' + pc.bold(pc.cyan('='.repeat(72))));
+      console.log(pc.bold(pc.cyan('  🤖 SOLANA POOL EXPLORER - PM2 DAEMON MODE')));
+      console.log(pc.bold(pc.cyan('='.repeat(72))));
+      if (botUsername) {
+        console.log(`  ✓ Telegram Bot : ${pc.green(pc.bold('@' + botUsername))}`);
+        console.log(`  ✓ Status       : ${pc.green('Online and listening for /scan commands')}`);
+      } else {
+        console.log(`  ⚠️ Telegram Bot : ${pc.yellow('Disabled (Set TELEGRAM_TOKEN in .env to enable)')}`);
+      }
+      console.log(pc.cyan('-'.repeat(72)) + '\n');
+      console.log(pc.dim('[PM2] Service is running in background. Stop with pm2 stop solana-pool-bot\n'));
+
+      // Keep process alive and handle graceful shutdown
+      await new Promise((resolve) => {
+        const onShutdown = (signal) => {
+          console.log(pc.cyan(`\n[PM2] Received ${signal}. Shutting down gracefully...`));
+          if (tgBot) tgBot.stopPolling();
+          resolve();
+        };
+        process.on('SIGINT', () => onShutdown('SIGINT'));
+        process.on('SIGTERM', () => onShutdown('SIGTERM'));
+      });
+      return;
+    }
+
+    // Otherwise, start interactive command mode (default for local npm start)
     try {
       await startInteractiveCli(async (target) => {
         return await executeScan(target, options);
@@ -80,6 +110,7 @@ program
       if (tgBot) {
         tgBot.stopPolling();
       }
+      process.exit(0);
     }
   });
 

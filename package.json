@@ -10,6 +10,11 @@
   },
   "scripts": {
     "start": "node src/index.js",
+    "daemon": "node src/index.js --daemon",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop ecosystem.config.cjs",
+    "pm2:restart": "pm2 restart ecosystem.config.cjs",
+    "pm2:logs": "pm2 logs solana-pool-bot",
     "watch": "node src/index.js --watch",
     "detail": "node src/index.js --detail"
   },

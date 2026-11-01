@@ -89,6 +89,42 @@ node src/index.js /scan xg71xrhn7MEj5akrZGteuYeiTLbBzyNCpBn69bRYd5a
 
 ---
 
+## 🖥️ Running 24/7 on VPS with PM2 (Auto-Startup)
+
+To run the Telegram bot continuously in the background on your VPS and have it automatically start whenever the server reboots:
+
+### 1. Install PM2 globally
+```bash
+npm install -g pm2
+```
+
+### 2. Start the service with PM2
+```bash
+npm run pm2:start
+```
+*(Or: `pm2 start ecosystem.config.cjs`)*
+
+### 3. Save current PM2 processes
+```bash
+pm2 save
+```
+
+### 4. Enable automatic startup on system reboot
+```bash
+pm2 startup
+```
+PM2 will print a `sudo env PATH=...` command. Copy and run that command in your terminal.
+
+---
+
+### Useful PM2 Commands:
+- **View status:** `pm2 status`
+- **View live logs:** `npm run pm2:logs` (or `pm2 logs solana-pool-bot`)
+- **Restart service:** `npm run pm2:restart`
+- **Stop service:** `npm run pm2:stop`
+
+---
+
 ## 📄 Output Format in `state-data.json`
 
 Every time a scan runs (from Terminal or Telegram), the result is saved to `state-data.json`:
