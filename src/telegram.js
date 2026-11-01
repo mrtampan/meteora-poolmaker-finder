@@ -62,6 +62,7 @@ export class TelegramBotClient {
     this.isRunning = false;
     this.abortController = null;
     this.botInfo = null;
+    this.processedUpdates = new Set();
   }
 
   async callApi(method, body = {}) {
@@ -93,10 +94,15 @@ export class TelegramBotClient {
     });
   }
 
-  async broadcastResult(resultItem, poolInfo) {
-    if (!this.allowedChatId) return null;
-    const msg = formatTelegramMessage(resultItem, poolInfo);
-    return await this.sendMessage(this.allowedChatId, msg);
+  async editMessage(chatId, messageId, text, extra = {}) {
+    return await this.callApi('editMessageText', {
+      chat_id: chatId,
+      message_id: messageId,
+      text,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+      ...extra
+    });
   }
 
   async startPolling(onScanHandler) {
@@ -125,8 +131,18 @@ export class TelegramBotClient {
         if (Array.isArray(data.result)) {
           for (const update of data.result) {
             offset = update.update_id + 1;
+
+            if (this.processedUpdates.has(update.update_id)) {
+              continue;
+            }
+            this.processedUpdates.add(update.update_id);
+            if (this.processedUpdates.size > 500) {
+              const firstKey = this.processedUpdates.values().next().value;
+              this.processedUpdates.delete(firstKey);
+            }
+
             if (update.message && update.message.text) {
-              this.handleMessage(update.message, onScanHandler).catch(() => {});
+              await this.handleMessage(update.message, onScanHandler).catch(() => {});
             }
           }
         }
@@ -184,15 +200,28 @@ export class TelegramBotClient {
         return;
       }
 
-      await this.sendMessage(chatId, `⏳ <i>Scanning pool <code>${escapeHtml(target)}</code>...</i>`);
+      const loadingMsg = await this.sendMessage(chatId, `⏳ <i>Scanning pool <code>${escapeHtml(target)}</code>...</i>`);
 
       try {
         const result = await onScanHandler(target);
         if (result && result.resultItem) {
           const formatted = formatTelegramMessage(result.resultItem, result.poolInfo);
-          await this.sendMessage(chatId, formatted);
+          if (loadingMsg && loadingMsg.ok && loadingMsg.result?.message_id) {
+            await this.editMessage(chatId, loadingMsg.result.message_id, formatted).catch(async () => {
+              await this.sendMessage(chatId, formatted);
+            });
+          } else {
+            await this.sendMessage(chatId, formatted);
+          }
         } else {
-          await this.sendMessage(chatId, `❌ <b>Failed:</b> Genesis transaction not found for pool.`);
+          const failMsg = `❌ <b>Failed:</b> Genesis transaction not found for pool <code>${escapeHtml(target)}</code>.`;
+          if (loadingMsg && loadingMsg.ok && loadingMsg.result?.message_id) {
+            await this.editMessage(chatId, loadingMsg.result.message_id, failMsg).catch(async () => {
+              await this.sendMessage(chatId, failMsg);
+            });
+          } else {
+            await this.sendMessage(chatId, failMsg);
+          }
         }
       } catch (err) {
         await this.sendMessage(chatId, `❌ <b>Error:</b> ${escapeHtml(err.message)}`);
@@ -202,14 +231,27 @@ export class TelegramBotClient {
 
     // Direct address pasted without /scan
     if (isValidSolanaAddress(cleanText)) {
-      await this.sendMessage(chatId, `⏳ <i>Scanning pool <code>${escapeHtml(cleanText)}</code>...</i>`);
+      const loadingMsg = await this.sendMessage(chatId, `⏳ <i>Scanning pool <code>${escapeHtml(cleanText)}</code>...</i>`);
       try {
         const result = await onScanHandler(cleanText);
         if (result && result.resultItem) {
           const formatted = formatTelegramMessage(result.resultItem, result.poolInfo);
-          await this.sendMessage(chatId, formatted);
+          if (loadingMsg && loadingMsg.ok && loadingMsg.result?.message_id) {
+            await this.editMessage(chatId, loadingMsg.result.message_id, formatted).catch(async () => {
+              await this.sendMessage(chatId, formatted);
+            });
+          } else {
+            await this.sendMessage(chatId, formatted);
+          }
         } else {
-          await this.sendMessage(chatId, `❌ <b>Failed:</b> Genesis transaction not found for pool.`);
+          const failMsg = `❌ <b>Failed:</b> Genesis transaction not found for pool <code>${escapeHtml(cleanText)}</code>.`;
+          if (loadingMsg && loadingMsg.ok && loadingMsg.result?.message_id) {
+            await this.editMessage(chatId, loadingMsg.result.message_id, failMsg).catch(async () => {
+              await this.sendMessage(chatId, failMsg);
+            });
+          } else {
+            await this.sendMessage(chatId, failMsg);
+          }
         }
       } catch (err) {
         await this.sendMessage(chatId, `❌ <b>Error:</b> ${escapeHtml(err.message)}`);

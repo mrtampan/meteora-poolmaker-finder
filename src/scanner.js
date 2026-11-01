@@ -9,29 +9,11 @@ import { formatResultItem, saveStateData } from './exporter.js';
 import { isValidSolanaAddress } from './prompt.js';
 
 /**
- * Broadcast helper that does not create circular dependency
- */
-async function tryBroadcastToTelegram(resultItem, poolInfo) {
-  if (process.env.TELEGRAM_TOKEN && process.env.TELEGRAM_CHAT_ID) {
-    try {
-      const { TelegramBotClient } = await import('./telegram.js');
-      const tg = new TelegramBotClient(process.env.TELEGRAM_TOKEN, {
-        allowedChatId: process.env.TELEGRAM_CHAT_ID
-      });
-      await tg.broadcastResult(resultItem, poolInfo);
-    } catch {
-      // Non-blocking: fail quietly if telegram has issue
-    }
-  }
-}
-
-/**
  * Executes a scan for the given pool address:
  * - Fetches pool metadata
  * - Fetches first genesis transaction
  * - Displays formatted terminal table
  * - Saves result to state-data.json
- * - Broadcasts result to Telegram if configured
  */
 export async function executeScan(poolAddress, options = {}) {
   const targetAddress = (poolAddress || '').trim();
@@ -82,9 +64,5 @@ export async function executeScan(poolAddress, options = {}) {
   const savedPath = saveStateData(resultItem, outputFile);
   console.log(pc.green(`✓ Result data saved to `) + pc.bold(savedPath) + '\n');
 
-  // 6. Broadcast to Telegram if configured
-  await tryBroadcastToTelegram(resultItem, poolInfo);
-
   return { resultItem, poolInfo };
 }
-
