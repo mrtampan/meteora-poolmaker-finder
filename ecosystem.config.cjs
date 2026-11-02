@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'solana-pool-bot',
+      name: 'meteora-poolmaker-finder',
       script: './src/index.js',
       args: '--daemon',
       cwd: './',
